@@ -8,6 +8,7 @@ from typing import List, Optional
 import numpy as np
 from datetime import datetime
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,16 +58,17 @@ def load_model():
     return model
 
 class ForecastRequest(BaseModel):
-    data: List[float] = Field(..., description="Input time series data (context)", min_items=1)
+    data: List[float] = Field(..., description="Input time series data (context)", min_length=1)
     horizon: int = Field(12, description="Number of steps to forecast", ge=1, le=512)
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "data": [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
                 "horizon": 12
             }
         }
+    }
 
 class ForecastResponse(BaseModel):
     point_forecast: List[float] = Field(..., description="Point forecast values")
@@ -152,4 +154,5 @@ async def forecast(request: ForecastRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
